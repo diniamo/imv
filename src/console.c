@@ -6,8 +6,15 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef IMV_USE_ICU
 #include <unicode/utext.h>
 #include <unicode/ubrk.h>
+#endif
+
+#ifdef IMV_USE_GRAPHEME
+#include <grapheme.h>
+#endif
 
 struct imv_console {
   char *buffer;
@@ -25,6 +32,7 @@ struct imv_console {
 /* Iterates forwards over characters in a UTF-8 string */
 static size_t next_char(char *buffer, size_t position)
 {
+  #if defined(IMV_USE_ICU)
   size_t result = position;
   UErrorCode status = U_ZERO_ERROR;
   UText *ut = utext_openUTF8(NULL, buffer, -1, &status);
@@ -42,11 +50,19 @@ static size_t next_char(char *buffer, size_t position)
   utext_close(ut);
   assert(U_SUCCESS(status));
   return result;
+  #elif defined(IMV_USE_GRAPHEME)
+  if (buffer[position] != 0) {
+    return position + grapheme_bytelen(buffer + position);
+  } else {
+    return position;
+  }
+  #endif
 }
 
 /* Iterates backwards over characters in a UTF-8 string */
 static size_t prev_char(char *buffer, size_t position)
 {
+  #if defined(IMV_USE_ICU)
   size_t result = position;
   UErrorCode status = U_ZERO_ERROR;
   UText *ut = utext_openUTF8(NULL, buffer, -1, &status);
@@ -64,6 +80,18 @@ static size_t prev_char(char *buffer, size_t position)
   utext_close(ut);
   assert(U_SUCCESS(status));
   return result;
+
+  #elif defined(IMV_USE_GRAPHEME)
+  size_t result = 0;
+  size_t step;
+  do {
+    step = grapheme_bytelen(buffer + result);
+    if (result + step >= position)
+      break;
+    result += step;
+  } while (step > 0);
+  return result;
+  #endif
 }
 
 static void add_to_history(struct list *history, const char *line)

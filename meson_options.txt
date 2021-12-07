@@ -8,6 +8,14 @@ option('windows',
   description : 'window system to use'
 )
 
+# Unicode backend - default is ICU
+option('unicode',
+  type: 'combo',
+  value: 'icu',
+  choices : ['icu', 'grapheme'],
+  description : 'unicode library to use'
+)
+
 option('test',
   type : 'feature',
   description : 'enable tests'

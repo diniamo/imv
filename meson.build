@@ -38,6 +38,15 @@ else
   target_single_ws = false
 endif
 
+_unicode = get_option('unicode')
+if _unicode == 'icu'
+  unicode_lib = dependency('icu-io')
+  add_project_arguments('-DIMV_USE_ICU', language: 'c')
+elif _unicode == 'grapheme'
+  unicode_lib = cc.find_library('grapheme')
+  add_project_arguments('-DIMV_USE_GRAPHEME', language: 'c')
+endif
+
 gl_dep = dependency('gl', required: false)
 if not gl_dep.found()
   # libglvnd fallback for pure-wayland systems
@@ -49,7 +58,7 @@ deps_for_imv = [
   gl_dep,
   dependency('threads'),
   dependency('xkbcommon'),
-  dependency('icu-io'),
+  unicode_lib,
   dependency('inih', fallback : ['inih', 'inih_dep']),
   m_dep,
 ]
