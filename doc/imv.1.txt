@@ -70,6 +70,9 @@ Options
 *-u* <linear|nearest_neighbour>::
 	Set upscaling method used by imv.
 
+*-w* <windowtitle>::
+    Set window title when starting imv.
+
 *-x*::
 	Disable looping of input paths.
 

@@ -731,6 +731,17 @@ static bool parse_upscaling_method(struct imv *imv, const char *method)
   return false;
 }
 
+static bool parse_window_title(struct imv *imv, const char *name)
+{
+  if (strcmp(name, "")) {
+    free(imv->title_text);
+    imv->title_text = strdup(name);
+    return true;
+  }
+
+  return false;
+}
+
 static bool parse_initial_pan(struct imv *imv, const char *pan_params)
 {
   char *next_val;
@@ -823,7 +834,7 @@ bool imv_parse_args(struct imv *imv, int argc, char **argv)
   int o;
 
  /* TODO getopt_long */
-  while ((o = getopt(argc, argv, "frdxhvlu:s:n:b:t:c:")) != -1) {
+  while ((o = getopt(argc, argv, "frdxhvlu:s:n:b:t:c:w:")) != -1) {
     switch(o) {
       case 'f': imv->start_fullscreen = true;                    break;
       case 'r': imv->recursive_load = true;                      break;
@@ -864,6 +875,7 @@ bool imv_parse_args(struct imv *imv, int argc, char **argv)
         }
         break;
       case 'c': list_append(imv->startup_commands, optarg); break;
+      case 'w': parse_window_title(imv, optarg); break;
       case '?':
         imv_log(IMV_ERROR, "Unknown argument '%c'. Aborting.\n", optopt);
         return false;
