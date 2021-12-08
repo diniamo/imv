@@ -419,7 +419,7 @@ void imv_window_pump_events(struct imv_window *window, imv_event_handler handler
         handler(data, &e);
       }
     } else if (xev.type == ClientMessage) {
-      if (xev.xclient.message_type = window->wm_protocols && xev.xclient.data.l[0] == window->wm_delete_window) {
+      if (xev.xclient.message_type == window->wm_protocols && xev.xclient.data.l[0] == window->wm_delete_window) {
         struct imv_event e = {
           .type = IMV_EVENT_CLOSE
         };
