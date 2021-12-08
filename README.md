@@ -4,6 +4,8 @@ imv - X11/Wayland Image Viewer
 
 `imv` is a command line image viewer intended for use with tiling window managers.
 
+[Project home](https://sr.ht/~exec64/imv/)
+
 Features
 --------
 

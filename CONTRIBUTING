@@ -1,9 +1,10 @@
                          imv Contributing Guidelines
                          ===========================
 
-1) Please keep pull requests rebased onto the latest master. All merges should
-   be simple fast-forward merges. While rebasing, tidy up and merge your commits
-   as you think appropriate.
+1) Please submit all patches to ~exec64/imv-devel@lists.sr.ht with
+   a subject line prefixed with [PATCH imv] or [PATCH imv v2] as
+   appropriate. This will help ensure that CI is run against your
+   patch automatically.
 
 2) Please ensure that your changes fit with the existing coding style of imv.
    Strictly no tabs, and 2 spaces of indentation.
