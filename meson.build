@@ -19,6 +19,8 @@ add_project_arguments('-DIMV_VERSION="@0@"'.format(version), language: 'c')
 
 add_project_arguments('-D_XOPEN_SOURCE=700', language: 'c')
 
+add_project_arguments('-DRSVG_DISABLE_DEPRECATION_WARNINGS', language: 'c')
+
 cc = meson.get_compiler('c')
 dep_null = dependency('', required: false)
 m_dep = cc.find_library('m', required : false)
