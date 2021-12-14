@@ -18,6 +18,8 @@
 #include <GL/gl.h>
 #include "xdg-shell-client-protocol.h"
 
+#define imv_min(a,b) ((a) > (b) ? (b) : (a))
+
 struct imv_window {
   struct wl_display    *wl_display;
   struct wl_registry   *wl_registry;
@@ -502,16 +504,20 @@ static void on_global(void *data, struct wl_registry *registry, uint32_t id,
   struct imv_window *window = data;
 
   if (!strcmp(interface, "wl_compositor")) {
+    version = imv_min(version, 4);
     window->wl_compositor = 
       wl_registry_bind(registry, id, &wl_compositor_interface, version);
   } else if (!strcmp(interface, "xdg_wm_base")) {
+    version = imv_min(version, 2);
     window->wl_xdg =
       wl_registry_bind(registry, id, &xdg_wm_base_interface, version);
     xdg_wm_base_add_listener(window->wl_xdg, &shell_listener_xdg, window);
   } else if (!strcmp(interface, "wl_seat")) {
+    version = imv_min(version, 7);
     window->wl_seat = wl_registry_bind(registry, id, &wl_seat_interface, version);
     wl_seat_add_listener(window->wl_seat, &seat_listener, window);
   } else if (!strcmp(interface, "wl_output")) {
+    version = imv_min(version, 3);
     struct output_data *output_data = calloc(1, sizeof *output_data);
     output_data->wl_output = wl_registry_bind(registry, id, &wl_output_interface, version);
     output_data->pending_scale = 1;
