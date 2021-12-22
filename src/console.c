@@ -52,7 +52,7 @@ static size_t next_char(char *buffer, size_t position)
   return result;
   #elif defined(IMV_USE_GRAPHEME)
   if (buffer[position] != 0) {
-    return position + grapheme_bytelen(buffer + position);
+    return position + grapheme_next_character_break(buffer + position, SIZE_MAX);
   } else {
     return position;
   }
@@ -85,7 +85,7 @@ static size_t prev_char(char *buffer, size_t position)
   size_t result = 0;
   size_t step;
   do {
-    step = grapheme_bytelen(buffer + result);
+    step = grapheme_next_character_break(buffer + result, SIZE_MAX);
     if (result + step >= position)
       break;
     result += step;
