@@ -1130,7 +1130,7 @@ int imv_run(struct imv *imv)
     }
 
     /* handle slideshow */
-    if (imv->slideshow.duration != 0.0) {
+    if (imv_viewport_is_playing(imv->view) && imv->slideshow.duration != 0.0) {
       double dt = current_time - last_time;
 
       imv->slideshow.elapsed += dt;
