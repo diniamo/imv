@@ -1,2 +1,6 @@
-#!/bin/sh
-exec imv -n "$1" "$(dirname "$1")"
+#!/bin/sh -efu
+if [ $# -ge 2 ]; then
+  exec imv "$@"
+else
+  exec imv -n "$1" "$(dirname "$1")"
+fi
