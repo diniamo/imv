@@ -27,7 +27,7 @@ Authors
 imv-msg is written and maintained by Harry Jeffery <me@harry.pm>
 
 Full source code and other information can be found at
-<https://github.com/eXeC64/imv>.
+<https://sr.ht/~exec64/imv>.
 
 See Also
 --------

@@ -819,7 +819,7 @@ static void print_help(struct imv *imv)
   }
 
   puts("imv's full source code is published under the terms of the MIT\n"
-       "license, and can be found at https://github.com/eXeC64/imv\n"
+       "license, and can be found at https://sr.ht/~exec64/imv\n"
        "\n"
        "imv uses the inih library to parse ini files.\n"
        "See https://github.com/benhoyt/inih for details.\n"
