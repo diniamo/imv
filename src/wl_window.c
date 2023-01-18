@@ -550,8 +550,6 @@ static void update_scale(struct imv_window *window)
   if (new_scale != window->scale) {
     window->scale = new_scale;
     wl_surface_set_buffer_scale(window->wl_surface, window->scale);
-    wl_surface_commit(window->wl_surface);
-    wl_display_roundtrip(window->wl_display);
     size_t buffer_width = window->width * window->scale;
     size_t buffer_height = window->height * window->scale;
     wl_egl_window_resize(window->egl_window, buffer_width, buffer_height, 0, 0);
