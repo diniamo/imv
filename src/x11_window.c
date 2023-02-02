@@ -106,7 +106,9 @@ struct imv_window *imv_window_create(int w, int h, const char *title)
   set_nonblocking(window->pipe_fds[1]);
 
   window->x_display = XOpenDisplay(NULL);
-  assert(window->x_display);
+  if (window->x_display == NULL) {
+    return NULL;
+  }
   Window root = DefaultRootWindow(window->x_display);
   assert(root);
 

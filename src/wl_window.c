@@ -667,10 +667,12 @@ static const struct xdg_toplevel_listener toplevel_listener = {
   .close = toplevel_close
 };
 
-static void connect_to_wayland(struct imv_window *window)
+static bool connect_to_wayland(struct imv_window *window)
 {
   window->wl_display = wl_display_connect(NULL);
-  assert(window->wl_display);
+  if (window->wl_display == NULL) {
+    return false;
+  }
   window->display_fd = wl_display_get_fd(window->wl_display);
   pipe(window->pipe_fds);
   set_nonblocking(window->pipe_fds[0]);
@@ -687,6 +689,8 @@ static void connect_to_wayland(struct imv_window *window)
 
   window->egl_display = eglGetDisplay(window->wl_display);
   eglInitialize(window->egl_display, NULL, NULL);
+
+  return true;
 }
 
 static void create_window(struct imv_window *window, int width, int height,
@@ -789,7 +793,9 @@ struct imv_window *imv_window_create(int width, int height, const char *title)
   window->keyboard = imv_keyboard_create();
   assert(window->keyboard);
   window->wl_outputs = list_create();
-  connect_to_wayland(window);
+  if (!connect_to_wayland(window)) {
+    return NULL;
+  }
   create_window(window, width, height, title);
 
   struct sigevent timer_handler = {
