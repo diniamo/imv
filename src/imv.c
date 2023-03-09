@@ -1,6 +1,7 @@
 #include "imv.h"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
@@ -754,6 +755,15 @@ static bool parse_initial_pan(struct imv *imv, const char *pan_params)
   return true;
 }
 
+static void set_cloexec(int fd)
+{
+  int flags = fcntl(fd, F_GETFD);
+  assert(flags != -1);
+  flags |= FD_CLOEXEC;
+  int rc = fcntl(fd, F_SETFD, flags);
+  assert(rc != -1);
+}
+
 static void *pipe_stdin(void *data)
 {
   int *fd = data;
@@ -942,6 +952,9 @@ int imv_run(struct imv *imv)
       return 1;
     }
 
+    /* if a child process spawned by imv inherits the write part of the pipe,
+     * load_paths_from_stdin() will not exit until the child dies */
+    set_cloexec(stdin_pipe_fds[1]);
     imv->stdin_pipe = fdopen(stdin_pipe_fds[0], "re");
 
     if (pthread_create(&load_paths_thread, NULL, load_paths_from_stdin, imv)
