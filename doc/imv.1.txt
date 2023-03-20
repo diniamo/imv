@@ -76,6 +76,12 @@ Options
 *-x*::
 	Disable looping of input paths.
 
+*-W* <width>::
+	Initial width of window.
+
+*-H* <height>::
+	Initial height of window.
+
 Commands
 --------
 

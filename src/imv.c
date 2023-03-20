@@ -764,6 +764,30 @@ static void set_cloexec(int fd)
   assert(rc != -1);
 }
 
+static bool parse_initial_width(struct imv *imv, const char *width_value)
+{
+  char *endptr;
+  errno = 0;
+  int val_x = strtol(width_value, &endptr, 10);
+  if(errno != 0 || *endptr != '\0' || endptr == width_value) {
+    return false;
+  }
+  imv->initial_width = val_x;
+  return true;
+}
+
+static bool parse_initial_height(struct imv *imv, const char *height_value)
+{
+  char *endptr;
+  errno = 0;
+  int val_y = strtol(height_value, &endptr, 10);
+  if(errno != 0 || *endptr != '\0' || endptr == height_value) {
+    return false;
+  }
+  imv->initial_height = val_y;
+  return true;
+}
+
 static void *pipe_stdin(void *data)
 {
   int *fd = data;
@@ -844,7 +868,7 @@ bool imv_parse_args(struct imv *imv, int argc, char **argv)
   int o;
 
  /* TODO getopt_long */
-  while ((o = getopt(argc, argv, "frdxhvlu:s:n:b:t:c:w:")) != -1) {
+  while ((o = getopt(argc, argv, "frdxhvlu:s:n:b:t:c:w:W:H:")) != -1) {
     switch(o) {
       case 'f': imv->start_fullscreen = true;                    break;
       case 'r': imv->recursive_load = true;                      break;
@@ -881,6 +905,18 @@ bool imv_parse_args(struct imv *imv, int argc, char **argv)
       case 't':
         if (!parse_slideshow_duration(imv, optarg)) {
           imv_log(IMV_ERROR, "Invalid slideshow duration. Aborting.\n");
+          return false;
+        }
+        break;
+      case 'W':
+        if(!parse_initial_width(imv, optarg)) {
+          imv_log(IMV_ERROR, "Invalid initial width value. Aborting.\n");
+          return false;
+        }
+        break;
+      case 'H':
+        if(!parse_initial_height(imv, optarg)) {
+          imv_log(IMV_ERROR, "Invalid initial height value. Aborting.\n");
           return false;
         }
         break;
