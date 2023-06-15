@@ -538,10 +538,6 @@ struct imv *imv_create(void)
   imv->commands = imv_commands_create();
   imv->console = imv_console_create();
   imv_console_set_command_callback(imv->console, &command_callback, imv);
-  imv->ipc = imv_ipc_create();
-  if (imv->ipc) {
-    imv_ipc_set_command_callback(imv->ipc, &command_callback, imv);
-  }
   imv->title_text = strdup(
       "imv - [${imv_current_index}/${imv_file_count}]"
       " [${imv_width}x${imv_height}] [${imv_scale}%]"
@@ -972,6 +968,11 @@ int imv_run(struct imv *imv)
 
   if (!setup_window(imv))
     return 1;
+
+  imv->ipc = imv_ipc_create();
+  if (imv->ipc) {
+    imv_ipc_set_command_callback(imv->ipc, &command_callback, imv);
+  }
 
   /* if loading paths from stdin, kick off a thread to do that - we'll receive
    * events back via internal events */
