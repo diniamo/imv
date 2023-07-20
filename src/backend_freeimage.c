@@ -139,7 +139,8 @@ static void first_frame(void *raw_private, struct imv_image **image, int *framet
     FreeImage_GetMetadata(FIMD_ANIMATION, frame, "FrameTime", &tag);
     if (FreeImage_GetTagValue(tag)) {
       *frametime = *(int*)FreeImage_GetTagValue(tag);
-    } else {
+    }
+    if (*frametime == 0) {
       *frametime = 100; /* default value for gifs */
     }
     bmp = FreeImage_ConvertTo24Bits(frame);
