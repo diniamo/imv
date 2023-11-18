@@ -89,3 +89,11 @@ option('libheif',
   type : 'feature',
   description : 'provides: heif'
 )
+
+# libjxl https://jpeg.org/jpegxl/
+# depends: brotlidec, brotlienc, highway, lcms2
+# license: modified bsd
+option('libjxl',
+  type : 'feature',
+  description : 'provides: jxl'
+)

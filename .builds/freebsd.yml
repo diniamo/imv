@@ -7,6 +7,7 @@ packages:
   - graphics/libGLU
   - graphics/libheif
   - graphics/libjpeg-turbo
+  - graphics/libjxl
   - graphics/libnsgif
   - graphics/librsvg2-rust
   - graphics/png

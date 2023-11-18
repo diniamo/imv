@@ -10,6 +10,7 @@ packages:
   - libheif
   - libinih
   - libjpeg-turbo
+  - libjxl
   - libnsgif
   - libpng
   - librsvg

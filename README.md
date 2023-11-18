@@ -139,6 +139,7 @@ Installation
 | librsvg        | >=v2.44  | Optional. Provides SVG support.                |
 | libnsgif       |          | Optional. Provides animated GIF support.       |
 | libheif        |          | Optional. Provides HEIF support.               |
+| libjxl         |          | Optional. Provides JPEGXL support.             |
 
 Dependencies are determined by which backends and window systems are enabled
 when building `imv`. You can find a summary of which backends are available
