@@ -147,7 +147,7 @@ struct imv_window *imv_window_create(int w, int h, const char *title)
   window->wm_protocols = XInternAtom(window->x_display, "WM_PROTOCOLS", false);
   window->wm_delete_window = XInternAtom(window->x_display, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(window->x_display, window->x_window, &window->wm_delete_window, 1);
-  XStoreName(window->x_display, window->x_window, title);
+  imv_window_set_title(window, title);
 
   window->x_glc = glXCreateContext(window->x_display, vi, NULL, GL_TRUE);
   assert(window->x_glc);
@@ -205,7 +205,14 @@ void imv_window_get_framebuffer_size(struct imv_window *window, int *w, int *h)
 
 void imv_window_set_title(struct imv_window *window, const char *title)
 {
+  Atom atom_wm_name;
+  Atom atom_utf8;
+
   XStoreName(window->x_display, window->x_window, title);
+  atom_wm_name = XInternAtom(window->x_display, "_NET_WM_NAME", False);
+  atom_utf8 = XInternAtom(window->x_display, "UTF8_STRING", False);
+  XChangeProperty(window->x_display, window->x_window, atom_wm_name, atom_utf8,
+      8, PropModeReplace, (unsigned char*)title, strlen(title));
 }
 
 bool imv_window_is_fullscreen(struct imv_window *window)
