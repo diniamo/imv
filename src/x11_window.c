@@ -217,16 +217,16 @@ void imv_window_set_title(struct imv_window *window, const char *title)
 
 bool imv_window_is_fullscreen(struct imv_window *window)
 {
-  size_t count = 0;
+  unsigned long count = 0;
   Atom type;
   int format;
-  size_t after;
+  unsigned long after;
   Atom *props = NULL;
   XGetWindowProperty(window->x_display, window->x_window, window->x_state,
       0, 1024, False, XA_ATOM, &type, &format, &count, &after, (unsigned char**)&props);
 
   bool fullscreen = false;
-  for (size_t i = 0; i < count; ++i) {
+  for (unsigned long i = 0; i < count; ++i) {
     if (props[i] == window->x_fullscreen) {
       fullscreen = true;
       break;
