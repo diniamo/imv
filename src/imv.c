@@ -1098,6 +1098,11 @@ int imv_run(struct imv *imv)
               continue;
             }
 
+            if (!imv->stdin_image_data || !imv->stdin_image_data_len) {
+              /* Skip if image failed to load */
+              continue;
+            }
+
             result = backend->open_memory(imv->stdin_image_data,
                 imv->stdin_image_data_len, &new_source);
           } else {
@@ -2068,27 +2073,41 @@ static size_t read_from_stdin(void **buffer)
   size_t len = 0;
   ssize_t r;
   size_t step = 4096; /* Arbitrary value of 4 KiB */
-  void *p;
+  void *new_buf;
 
-  errno = 0; /* clear errno */
+  errno = 0;
+  *buffer = NULL;
 
-  for (*buffer = NULL; (*buffer = realloc((p = *buffer), len + step));
-      len += (size_t)r) {
-    if ((r = read(STDIN_FILENO, (uint8_t *)*buffer + len, step)) == -1) {
-      perror(NULL);
+  while (1) {
+    new_buf = realloc(*buffer, len + step);
+    if (new_buf) {
+      *buffer = new_buf;
+    } else {
+      /* Failed to extend buffer */
+      int save = errno;
+      free(*buffer);
+      errno = save;
+      *buffer = NULL;
+      len = 0;
       break;
-    } else if (r == 0) {
+    }
+
+    r = read(STDIN_FILENO, (uint8_t *)*buffer + len, step);
+    if (r > 0) {
+      len += (size_t)r;
+    } else {
+      if (r < 0) {
+        /* Read error */
+        int save = errno;
+        perror(NULL);
+        free(*buffer);
+        errno = save;
+        len = 0;
+      }
       break;
     }
   }
 
-  /* realloc(3) leaves old buffer allocated in case of error */
-  if (*buffer == NULL && p != NULL) {
-    int save = errno;
-    free(p);
-    errno = save;
-    len = 0;
-  }
   return len;
 }
 
