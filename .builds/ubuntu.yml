@@ -9,7 +9,6 @@ packages:
   - libheif-dev
   - libicu-dev
   - libinih-dev
-  - libjxl-dev
   - libpango1.0-dev
   - libpng-dev
   - librsvg2-dev
@@ -26,9 +25,10 @@ sources:
   - https://git.sr.ht/~exec64/imv
 tasks:
   # libnsgif isn't packaged by ubuntu
+  # libjxl-dev isn't packaged by ubuntu lts
   - gcc: |
-      CC=gcc meson imv build_gcc -D auto_features=enabled -D libnsgif=disabled
+      CC=gcc meson imv build_gcc -D auto_features=enabled -D libnsgif=disabled -D libjxl=disabled
       CC=gcc ninja -C build_gcc test
   - clang: |
-      CC=clang meson imv build_clang -D auto_features=enabled -D libnsgif=disabled
+      CC=clang meson imv build_clang -D auto_features=enabled -D libnsgif=disabled -D libjxl=disabled
       CC=clang ninja -C build_clang test

@@ -8,7 +8,6 @@ packages:
   - graphics/libheif
   - graphics/libjpeg-turbo
   - graphics/libjxl
-  - graphics/libnsgif
   - graphics/librsvg2-rust
   - graphics/png
   - graphics/tiff
@@ -20,6 +19,7 @@ packages:
 sources:
   - https://git.sr.ht/~exec64/imv
 tasks:
+  # freebsd ships libnsgif 1.0.0 which is too new
   - meson: |
-      meson imv build -D auto_features=enabled -D c_link_args='-L/usr/local/lib'
+      meson imv build -D auto_features=enabled -D libnsgif=disabled -D c_link_args='-L/usr/local/lib'
       ninja -C build test
