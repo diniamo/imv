@@ -1,6 +1,18 @@
 imv Changelog
 =============
 
+v4.5.0 - 2024-02-20
+-------------------
+
+* Add new jpgxl backend
+* Added -W and -H arguments to configure initial dimensions
+* Fix utf8 in window titles
+* Fix some animated gifs showing as still images
+* Fix several crashes
+* Fixed new build warnings
+* Limit libnsgif to <1.0.0 to fix build
+* Update mime types
+
 v4.4.0 - 2023-01-18
 -------------------
 
