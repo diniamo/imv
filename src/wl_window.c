@@ -871,7 +871,6 @@ static void surface_configure(void *data, struct xdg_surface *surface, uint32_t 
   xdg_surface_ack_configure(surface, serial);
   window->xdg_configured = true;
   update_scale(data);
-  wl_surface_commit(window->wl_surface);
 }
 
 static const struct xdg_surface_listener shell_surface_listener = {
