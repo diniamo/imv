@@ -125,7 +125,7 @@ foreach backend : [
   ['libpng', 'dependency', 'libpng', []],
   ['libjpeg', 'dependency', 'libturbojpeg', []],
   ['librsvg', 'dependency', 'librsvg-2.0', '>= 2.44'],
-  ['libnsgif', 'dependency', 'libnsgif', '< 1.0.0'],
+  ['libnsgif', 'dependency', 'libnsgif', '1.0.0'],
   ['libheif', 'dependency', 'libheif', []],
   ['libjxl', 'dependency', 'libjxl', []],
 ]
