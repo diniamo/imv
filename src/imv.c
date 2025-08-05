@@ -193,6 +193,14 @@ struct imv {
   /* if reading an image from stdin, this is the buffer for it */
   void *stdin_image_data;
   size_t stdin_image_data_len;
+
+  struct {
+    /* initial scale pinch zoom */
+    double initial_zoom;
+
+    /* initial view offset for touch pan */
+    int initial_view_x, initial_view_y;
+  } touch_data;
 };
 
 static void command_quit(struct list *args, const char *argstr, void *data);
@@ -470,13 +478,60 @@ static void event_handler(void *data, const struct imv_event *e)
             x, y, -e->data.mouse_scroll.dy);
       }
       break;
+    case IMV_EVENT_TOUCH_TAP:
+      {
+        double current_scale;
+        imv_viewport_get_scale(imv->view, &current_scale);
+
+        double x = e->data.touch_tap.x;
+        double width;
+        {
+          int width_int;
+          imv_window_get_size(imv->window, &width_int, NULL);
+          width = (double)width_int;
+        }
+
+        if (x < width * 1/4) {
+          imv_navigator_select_rel(imv->navigator, -1);
+        } else if (x > width * 3/4) {
+          imv_navigator_select_rel(imv->navigator, 1);
+        } else {
+          imv->overlay.enabled = !imv->overlay.enabled;
+          imv->need_redraw = true;
+        }
+      }
+      break;
+    case IMV_EVENT_TOUCH_ZOOM_START:
+      imv_viewport_get_scale(imv->view, &imv->touch_data.initial_zoom);
+      break;
+    case IMV_EVENT_TOUCH_ZOOM_CHANGE:
+      {
+        double new_zoom = imv->touch_data.initial_zoom * e->data.touch_zoom.zoom;
+        int new_zoom_int = (int)(new_zoom * 100);
+        imv_viewport_zoom(imv->view, imv->current_image, IMV_ZOOM_TOUCH,
+                          e->data.touch_zoom.center_x, e->data.touch_zoom.center_y,
+                          new_zoom_int);
+      }
+      break;
+    case IMV_EVENT_TOUCH_PAN_START:
+      imv_viewport_get_offset(imv->view, &imv->touch_data.initial_view_x, &imv->touch_data.initial_view_y);
+      break;
+    case IMV_EVENT_TOUCH_PAN_CHANGE:
+      imv_viewport_move_relative(
+        imv->view,
+        imv->touch_data.initial_view_x,
+        imv->touch_data.initial_view_y,
+        (int)(e->data.touch_pan.current_x - e->data.touch_pan.initial_x),
+        (int)(e->data.touch_pan.current_y - e->data.touch_pan.initial_y),
+        imv->current_image
+      );
+      break;
     case IMV_EVENT_CUSTOM:
       consume_internal_event(imv, e->data.custom);
       break;
     default:
       break;
   }
-
 }
 
 static bool hex_value_to_color_rgb(const char* hex, struct color_rgb* color)

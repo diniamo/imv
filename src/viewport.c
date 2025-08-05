@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <math.h>
 
 struct imv_viewport {
   double scale;
@@ -110,28 +109,44 @@ void imv_viewport_set_default_pan_factor(struct imv_viewport *view, double pan_f
   view->pan_factor_y = pan_factor_y;
 }
 
+static void imv_viewport_keep_in_view(struct imv_viewport *view, const struct imv_image *image)
+{
+  int w = (int)(imv_image_width(image) * view->scale);
+  if (view->x < -w) {
+    view->x = -w;
+  } else if (view->x > view->buffer.width) {
+    view->x = view->buffer.width;
+  }
+
+  int h = (int)(imv_image_height(image) * view->scale);
+  if (view->y < -h) {
+    view->y = -h;
+  } else if (view->y > view->buffer.height) {
+    view->y = view->buffer.height;
+  }
+}
+
 void imv_viewport_move(struct imv_viewport *view, int x, int y,
     const struct imv_image *image)
 {
   input_xy_to_render_xy(view, &x, &y);
+
   view->x += x;
   view->y += y;
+  imv_viewport_keep_in_view(view, image);
+
   view->redraw = 1;
   view->locked = 1;
-  int w = (int)(imv_image_width(image) * view->scale);
-  int h = (int)(imv_image_height(image) * view->scale);
-  if (view->x < -w) {
-    view->x = -w;
-  }
-  if (view->x > view->buffer.width) {
-    view->x = view->buffer.width;
-  }
-  if (view->y < -h) {
-    view->y = -h;
-  }
-  if (view->y > view->buffer.height) {
-    view->y = view->buffer.height;
-  }
+}
+
+void imv_viewport_move_relative(struct imv_viewport *view, int initial_x, int initial_y, int delta_x, int delta_y, struct imv_image *image)
+{
+  view->x = initial_x + delta_x;
+  view->y = initial_y + delta_y;
+  imv_viewport_keep_in_view(view, image);
+
+  view->redraw = 1;
+  view->locked = 1;
 }
 
 void imv_viewport_zoom(struct imv_viewport *view, const struct imv_image *image,
@@ -144,7 +159,7 @@ void imv_viewport_zoom(struct imv_viewport *view, const struct imv_image *image,
   const int image_height = imv_image_height(image);
 
   /* x and y coordinates are relative to the image */
-  if(src == IMV_ZOOM_MOUSE) {
+  if(src == IMV_ZOOM_MOUSE || src == IMV_ZOOM_TOUCH) {
     input_xy_to_render_xy(view, &mouse_x, &mouse_y);
     x = mouse_x - view->x;
     y = mouse_y - view->y;
@@ -160,8 +175,12 @@ void imv_viewport_zoom(struct imv_viewport *view, const struct imv_image *image,
   const int wc_x = view->buffer.width/2;
   const int wc_y = view->buffer.height/2;
 
-  const double scale_factor = pow(1.04, amount);
-  view->scale *= scale_factor;
+  if (src == IMV_ZOOM_TOUCH) {
+    view->scale = amount / 100.0;
+  } else {
+    double delta_scale = 0.04 * view->buffer.width * amount / image_width;
+    view->scale += delta_scale;
+  }
 
   const double min_scale = 0.1;
   const double max_scale = 100;
