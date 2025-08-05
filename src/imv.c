@@ -2056,8 +2056,9 @@ static size_t generate_env_text(struct imv *imv, char *buf, size_t buf_len, cons
   wordexp_t word;
   setenv("IFS", "", 1);
   if (wordexp(format, &word, 0) == 0) {
-    for (size_t i = 0; i < word.we_wordc; ++i) {
-      len += snprintf(buf + len, buf_len - len, (i ? " %s" : "%s"), word.we_wordv[i]);
+    len += snprintf(buf, buf_len, "%s", word.we_wordv[0]);
+    for (size_t i = 1; i < word.we_wordc; ++i) {
+      len += snprintf(buf + len, buf_len - len, " %s", word.we_wordv[i]);
     }
     wordfree(&word);
   } else {
