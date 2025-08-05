@@ -847,7 +847,7 @@ static void *pipe_stdin(void *data)
     ssize_t err = read(STDIN_FILENO, buf, PIPE_BUF);
     if (err > 0) {
       /* writes up to PIPE_BUF are atomic */
-      write(*fd, buf, err);
+      (void)write(*fd, buf, err);
     } else if (err == 0 || errno != EINTR) {
       /* break if EOF or actual read error */
       break;
@@ -1926,7 +1926,7 @@ static void command_exec(struct list *args, const char *argstr, void *data)
   (void)args;
   struct imv *imv = data;
   update_env_vars(imv);
-  system(argstr);
+  (void)system(argstr);
 }
 
 static void command_center(struct list *args, const char *argstr, void *data)

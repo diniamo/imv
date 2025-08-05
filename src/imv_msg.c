@@ -36,7 +36,11 @@ int main(int argc, char **argv)
   }
   strncat(buf, "\n", sizeof buf - 1);
 
-  write(sockfd, buf, strlen(buf));
+  if (write(sockfd, buf, strlen(buf)) == -1) {
+    perror("Failed to write");
+    return 1;
+  }
+
   close(sockfd);
   return 0;
 }
