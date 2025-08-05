@@ -1,12 +1,17 @@
-[![builds.sr.ht status](https://builds.sr.ht/~exec64/imv.svg)](https://builds.sr.ht/~exec64/imv?)
 imv - X11/Wayland Image Viewer
 ==============================
 
 `imv` is a command line image viewer intended for use with tiling window managers.
 
-[Project home](https://sr.ht/~exec64/imv/)
+This soft-fork exists, becuase the original author stopped maintaining the project, so even submitted patches are left unattended. I don't plan to rewrite the whole project, the goals are:
+- Make my own changes
+- Add patches submitted to upstream
+- Rewrite the build system (maybe)
+- If the project were to gain popularity, accept PRs
 
-imv is currently seeking a new maintainer to adopt it. Please email the author if interested.
+[Project home](https://github.com/diniamo/imv)
+
+[Upstream](https://git.sr.ht/~exec64/imv)
 
 Features
 --------
@@ -22,11 +27,6 @@ Features
   * Photoshop PSD files
 * Configurable key bindings and behaviour
 * Highly scriptable with IPC via imv-msg
-
-Packages
---------
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/imv.svg)](https://repology.org/project/imv/versions)
 
 Example Usage
 -------------
