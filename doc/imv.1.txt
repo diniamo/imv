@@ -330,11 +330,12 @@ The **imv-msg**(1) utility is provided to simplify this from shell scripts.
 Authors
 -------
 
-imv is written and maintained by Harry Jeffery <me@harry.pm>
+imv is written by Harry Jeffery <me@harry.pm>
+and maintained by diniamo <diniamo53@gmail.com>
 with contributions from other developers.
 
 Full source code and other information can be found at
-<https://sr.ht/~exec64/imv>.
+<https://github.com/diniamo/imv>.
 
 See Also
 --------
