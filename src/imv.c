@@ -1537,10 +1537,20 @@ static bool parse_bool(const char *str)
   );
 }
 
+static bool load_config(struct imv *imv, const char *path);
+
 static int handle_ini_value(void *user, const char *section, const char *name,
                             const char *value)
 {
   struct imv *imv = user;
+
+  if (*section == '\0' && !strcmp(name, "include")) {
+    wordexp_t exp;
+    wordexp(value, &exp, WRDE_NOCMD);
+    bool success = load_config(imv, exp.we_wordv[0]);
+    wordfree(&exp);
+    return success;
+  }
 
   if (!strcmp(section, "binds")) {
     return add_bind(imv, name, value);
@@ -1552,7 +1562,6 @@ static int handle_ini_value(void *user, const char *section, const char *name,
   }
 
   if (!strcmp(section, "options")) {
-
     if (!strcmp(name, "fullscreen")) {
       imv->start_fullscreen = parse_bool(value);
       return 1;
@@ -1684,6 +1693,7 @@ static int handle_ini_value(void *user, const char *section, const char *name,
     imv_log(IMV_WARNING, "Ignoring unknown option: %s\n", name);
     return 1;
   }
+
   return 0;
 }
 

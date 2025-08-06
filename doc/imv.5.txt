@@ -19,6 +19,14 @@ behaviour, key bindings, and appearance.
 The imv configuration file is an ini-style file, with multiple 'key = value'
 settings, separated into several '[section]'s.
 
+Include
+-------
+
+The top-level *include* key can be used to load additional configuration files.
+Only one path may be passed at a time, but the key can be specified multiple
+times. The path is shell expanded (tilde, variables), but this also means that
+it must be quoted if it contains spaces.
+
 Options
 -------
 
