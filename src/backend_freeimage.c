@@ -121,19 +121,19 @@ static void first_frame(void *raw_private, struct imv_image **image, int *framet
           private->memory,
           /* flags */ GIF_LOAD256);
     } else {
-      imv_log(IMV_ERROR, "private->path and private->memory both NULL");
+      imv_log(IMV_ERROR, "private->path and private->memory both NULL\n");
       return;
     }
 
     if (!private->multibitmap) {
-      imv_log(IMV_ERROR, "first frame already loaded");
+      imv_log(IMV_ERROR, "first frame already loaded\n");
       return;
     }
 
     FIBITMAP *frame = FreeImage_LockPage(private->multibitmap, 0);
 
     private->num_frames = FreeImage_GetPageCount(private->multibitmap);
-    
+
     /* Get duration of first frame */
     FITAG *tag = NULL;
     FreeImage_GetMetadata(FIMD_ANIMATION, frame, "FrameTime", &tag);
@@ -156,7 +156,7 @@ static void first_frame(void *raw_private, struct imv_image **image, int *framet
       fibitmap = FreeImage_LoadFromMemory(private->format, private->memory, flags);
     }
     if (!fibitmap) {
-      imv_log(IMV_ERROR, "FreeImage_Load returned NULL");
+      imv_log(IMV_ERROR, "FreeImage_Load returned NULL\n");
       return;
     }
 

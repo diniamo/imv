@@ -322,15 +322,15 @@ static bool add_bind(struct imv *imv, const char *keys, const char *commands)
     enum bind_result result = imv_binds_add(imv->binds, list, command_buf);
 
     if (result == BIND_INVALID_KEYS) {
-      imv_log(IMV_ERROR, "Invalid keys to bind to");
+      imv_log(IMV_ERROR, "Invalid keys to bind to\n");
       success = false;
       break;
     } else if (result == BIND_INVALID_COMMAND) {
-      imv_log(IMV_ERROR, "No command given to bind to");
+      imv_log(IMV_ERROR, "No command given to bind to\n");
       success = false;
       break;
     } else if (result == BIND_CONFLICTS) {
-      imv_log(IMV_ERROR, "Key combination conflicts with existing bind");
+      imv_log(IMV_ERROR, "Key combination conflicts with existing bind\n");
       success = false;
       break;
     }

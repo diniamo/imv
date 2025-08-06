@@ -56,7 +56,7 @@ static void setup_keymap(struct imv_window *window)
 {
   xcb_connection_t *conn = xcb_connect(NULL, NULL);
   if (xcb_connection_has_error(conn)) {
-    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. Could not connect via xcb.");
+    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. Could not connect via xcb.\n");
     return;
   }
 
@@ -65,7 +65,7 @@ static void setup_keymap(struct imv_window *window)
         XKB_X11_MIN_MINOR_XKB_VERSION,
         0, NULL, NULL, NULL, NULL)) {
     xcb_disconnect(conn);
-    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. xkb extension not supported by server.");
+    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. xkb extension not supported by server.\n");
     return;
   }
 
@@ -74,7 +74,7 @@ static void setup_keymap(struct imv_window *window)
   struct xkb_context *context = xkb_context_new(0);
   if (!context) {
     xcb_disconnect(conn);
-    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. Failed to initialise xkb context.");
+    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. Failed to initialise xkb context.\n");
     return;
   }
 
@@ -86,7 +86,7 @@ static void setup_keymap(struct imv_window *window)
     free(keymap_str);
     xkb_keymap_unref(keymap);
   } else {
-    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. xkb_x11_keymap_new_from_device returned NULL.");
+    imv_log(IMV_ERROR, "x11_window: Failed to load keymap. xkb_x11_keymap_new_from_device returned NULL.\n");
   }
   xkb_context_unref(context);
 
