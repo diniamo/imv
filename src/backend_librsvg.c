@@ -57,7 +57,7 @@ static enum backend_result open_path(const char *path, struct imv_source **src)
   if (!f) {
     return BACKEND_BAD_PATH;
   }
-  fread(header, 1, sizeof header, f);
+  (void)fread(header, 1, sizeof header, f);
   fclose(f);
 
   header[(sizeof header) - 1] = 0;
@@ -104,4 +104,3 @@ const struct imv_backend imv_backend_librsvg = {
   .open_path = &open_path,
   .open_memory = &open_memory,
 };
-

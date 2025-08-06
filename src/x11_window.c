@@ -101,7 +101,7 @@ struct imv_window *imv_window_create(int w, int h, const char *title)
   struct imv_window *window = calloc(1, sizeof *window);
   window->pointer.last.x = -1;
   window->pointer.last.y = -1;
-  pipe(window->pipe_fds);
+  (void)pipe(window->pipe_fds);
   set_nonblocking(window->pipe_fds[0]);
   set_nonblocking(window->pipe_fds[1]);
 
@@ -296,7 +296,7 @@ void imv_window_wait_for_event(struct imv_window *window, double timeout)
 void imv_window_push_event(struct imv_window *window, struct imv_event *e)
 {
   /* Push it down the pipe */
-  write(window->pipe_fds[1], e, sizeof *e);
+  (void)write(window->pipe_fds[1], e, sizeof *e);
 }
 
 static void handle_keyboard(struct imv_window *window, imv_event_handler handler, void *data, const XEvent *xev)
