@@ -1527,40 +1527,6 @@ static void render_window(struct imv *imv)
   imv->cache_invalidated = false;
 }
 
-static char *get_config_path(void)
-{
-  const char *config_paths[] = {
-    "$imv_config",
-    "$XDG_CONFIG_HOME/imv/config",
-    "$HOME/.config/imv/config",
-    "$HOME/.imv_config",
-    "$HOME/.imv/config",
-    "/usr/local/etc/imv_config",
-    "/etc/imv_config",
-  };
-
-  for (size_t i = 0; i < sizeof(config_paths) / sizeof(char*); ++i) {
-    wordexp_t word;
-    if (wordexp(config_paths[i], &word, 0) == 0) {
-      if (!word.we_wordv[0]) {
-        wordfree(&word);
-        continue;
-      }
-
-      char *path = strdup(word.we_wordv[0]);
-      wordfree(&word);
-
-      if (!path || access(path, R_OK) == -1) {
-        free(path);
-        continue;
-      }
-
-      return path;
-    }
-  }
-  return NULL;
-}
-
 static bool parse_bool(const char *str)
 {
   return (
@@ -1721,26 +1687,62 @@ static int handle_ini_value(void *user, const char *section, const char *name,
   return 0;
 }
 
-bool imv_load_config(struct imv *imv)
+static bool load_config(struct imv *imv, const char *path)
 {
-  char *path = get_config_path();
-  if (!path) {
-    /* no config, no problem - we have defaults */
-    return true;
-  }
-
-  bool result = true;
-
-  const int err = ini_parse(path, handle_ini_value, imv);
+  int err = ini_parse(path, handle_ini_value, imv);
   if (err == -1) {
     imv_log(IMV_ERROR, "Unable to open config file: %s\n", path);
-    result = false;
   } else if (err > 0) {
     imv_log(IMV_ERROR, "Error in config file: %s:%d\n", path, err);
-    result = false;
   }
-  free(path);
-  return result;
+
+  return !err;
+}
+
+bool imv_load_config(struct imv *imv)
+{
+  char *env = getenv("imv_config");
+  if (env)
+    return load_config(imv, env);
+
+  char path_buf[PATH_MAX];
+
+  env = getenv("XDG_CONFIG_HOME");
+  if (env) {
+    strcpy(path_buf, env);
+    strcat(path_buf, "/imv/config");
+    if (access(path_buf, R_OK) == 0)
+      return load_config(imv, path_buf);
+  }
+
+  env = getenv("HOME");
+  if (env) {
+    strcpy(path_buf, env);
+    char *after = path_buf + strlen(env);
+    *after = '/';
+    after++;
+
+    strcpy(after, ".config/imv/config");
+    if (access(path_buf, R_OK) == 0)
+      return load_config(imv, path_buf);
+
+    strcpy(after, ".imv_config");
+    if (access(path_buf, R_OK) == 0)
+      return load_config(imv, path_buf);
+
+    strcpy(after, ".imv/config");
+    if (access(path_buf, R_OK) == 0)
+      return load_config(imv, path_buf);
+  }
+
+  if (access("/usr/local/etc/imv_config", R_OK) == 0)
+    return load_config(imv, "/usr/local/etc/imv_config");
+
+  if (access("/etc/imv_config", R_OK) == 0)
+    return load_config(imv, "/etc/imv_config");
+
+  // There are default values, so this is fine
+  return true;
 }
 
 static void command_quit(struct list *args, const char *argstr, void *data)
