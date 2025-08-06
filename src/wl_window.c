@@ -1,6 +1,3 @@
-#include "wayland-client-core.h"
-#include "wayland-client-protocol.h"
-#include "wayland-util.h"
 #include "window.h"
 #include "keyboard.h"
 #include "list.h"
@@ -16,6 +13,10 @@
 
 #include <wayland-client.h>
 #include <wayland-egl.h>
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
+#include <wayland-util.h>
+#include <wayland-cursor.h>
 #include <EGL/egl.h>
 #include <GL/gl.h>
 #include "xdg-shell-client-protocol.h"
@@ -40,10 +41,18 @@ enum imv_touch_state {
 	TOUCH_STATE_ZOOM
 };
 
+struct imv_cursor {
+  struct wl_cursor_theme *theme;
+  struct wl_cursor       *left_pointer;
+  struct wl_surface      *surface;
+  int32_t                hotspot_x, hotspot_y;
+};
+
 struct imv_window {
   struct wl_display    *wl_display;
   struct wl_registry   *wl_registry;
   struct wl_compositor *wl_compositor;
+  struct wl_shm        *wl_shm;
   struct wl_surface    *wl_surface;
   struct xdg_wm_base   *wl_xdg;
   struct xdg_surface   *wl_xdg_surface;
@@ -60,7 +69,8 @@ struct imv_window {
   bool xdg_configured;
 
   struct imv_keyboard *keyboard;
-  struct list *wl_outputs;
+  struct imv_cursor   cursor;
+  struct list         *wl_outputs;
 
   int display_fd;
   int pipe_fds[2];
@@ -286,10 +296,13 @@ static void pointer_enter(void *data, struct wl_pointer *pointer,
   (void)surface;
 
   struct imv_window *window = data;
+
   window->pointer.x.last = wl_fixed_to_double(surface_x);
   window->pointer.y.last = wl_fixed_to_double(surface_y);
   window->pointer.x.current = wl_fixed_to_double(surface_x);
   window->pointer.y.current = wl_fixed_to_double(surface_y);
+
+  wl_pointer_set_cursor(pointer, serial, window->cursor.surface, window->cursor.hotspot_x, window->cursor.hotspot_y);
 }
 
 static void pointer_leave(void *data, struct wl_pointer *pointer,
@@ -320,10 +333,8 @@ static void pointer_button(void *data, struct wl_pointer *pointer,
   (void)time;
 
   struct imv_window *window = data;
-  const uint32_t MOUSE1 = 0x110;
-  if (button == MOUSE1) {
+  if (button == 0x110)
     window->pointer.mouse1.current = state;
-  }
 }
 
 static void pointer_axis(void *data, struct wl_pointer *pointer,
@@ -776,6 +787,9 @@ static void on_global(void *data, struct wl_registry *registry, uint32_t id,
     wl_output_set_user_data(output_data->wl_output, output_data);
     wl_output_add_listener(output_data->wl_output, &output_listener, output_data);
     list_append(window->wl_outputs, output_data);
+  } else if (!strcmp(interface, "wl_shm")) {
+    version = imv_min(version, 2);
+    window->wl_shm = wl_registry_bind(registry, id, &wl_shm_interface, version);
   }
 }
 
@@ -999,6 +1013,9 @@ static void shutdown_wayland(struct imv_window *window)
   if (window->wl_touch) {
     wl_touch_destroy(window->wl_touch);
   }
+  if (window->cursor.theme) {
+    wl_cursor_theme_destroy(window->cursor.theme);
+  }
   if (window->wl_pointer) {
     wl_pointer_destroy(window->wl_pointer);
   }
@@ -1024,6 +1041,9 @@ static void shutdown_wayland(struct imv_window *window)
   if (window->wl_surface) {
     wl_surface_destroy(window->wl_surface);
   }
+  if (window->wl_shm) {
+    wl_shm_destroy(window->wl_shm);
+  }
   if (window->wl_compositor) {
     wl_compositor_destroy(window->wl_compositor);
   }
@@ -1039,6 +1059,31 @@ static void on_timer(union sigval sigval)
 {
   struct imv_window *window = sigval.sival_ptr;
   push_keypress(window, window->repeat_scancode);
+}
+
+static void load_cursor(struct imv_window *window)
+{
+  const char *xcursor_theme = getenv("XCURSOR_THEME");
+  const char *xcursor_size_string = getenv("XCURSOR_SIZE");
+  int xcursor_size = 24;
+  if (xcursor_size_string) {
+      int size = (int)strtol(xcursor_size_string, NULL, 10);
+      if (size > 0)
+          xcursor_size = size;
+  }
+
+  struct imv_cursor *cursor = &window->cursor;
+  cursor->theme = wl_cursor_theme_load(xcursor_theme, xcursor_size, window->wl_shm);
+  cursor->left_pointer = wl_cursor_theme_get_cursor(cursor->theme, "left_ptr");
+  cursor->surface = wl_compositor_create_surface(window->wl_compositor);
+
+  struct wl_cursor_image *image = cursor->left_pointer->images[0];
+  struct wl_buffer *buffer = wl_cursor_image_get_buffer(image);
+  wl_surface_attach(cursor->surface, buffer, 0, 0);
+  wl_surface_damage(cursor->surface, 0, 0, image->width, image->height);
+  wl_surface_commit(cursor->surface);
+  cursor->hotspot_x = image->hotspot_x;
+  cursor->hotspot_y = image->hotspot_y;
 }
 
 struct imv_window *imv_window_create(int width, int height, const char *title)
@@ -1057,6 +1102,7 @@ struct imv_window *imv_window_create(int width, int height, const char *title)
     return NULL;
   }
   create_window(window, width, height, title);
+  load_cursor(window);
 
   struct sigevent timer_handler = {
     .sigev_notify = SIGEV_THREAD,

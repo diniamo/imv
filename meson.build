@@ -93,6 +93,7 @@ if build_wayland
   files_wayland = files('src/wl_window.c', 'src/xdg-shell-protocol.c')
   deps_for_wayland = [
     dependency('wayland-client'),
+    dependency('wayland-cursor'),
     dependency('wayland-egl'),
     dependency('egl'),
     cc.find_library('rt'),

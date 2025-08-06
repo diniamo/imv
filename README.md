@@ -130,6 +130,7 @@ Installation
 | xcb            |          | Optional. Required for X11 support.            |
 | xkbcommon-x11  |          | Optional. Required for X11 support.            |
 | wayland-client |          | Optional. Required for Wayland support.        |
+| wayland-cursor |          | Optional. Required for Wayland support.        |
 | wayland-egl    |          | Optional. Required for Wayland support.        |
 | EGL            |          | Optional. Required for Wayland support.        |
 | FreeImage      |          | Optional. Provides PNG, JPEG, TIFF, GIF, etc.  |
