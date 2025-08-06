@@ -12,7 +12,7 @@ with a separate binary for each being built. `/usr/bin/imv` will be a script
 that checks for a Wayland compositor before running the appropriate binary.
 
 If you only care about one of these, you can specify to build only one of these
-by passing `-D windows=wayland` to `meson`, in which case only that
+by passing `-D window_system=wayland` to `meson`, in which case only that
 binary shall be packaged without the need for a launcher script to
 select between the two.
 

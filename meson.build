@@ -1,71 +1,32 @@
 project(
   'imv',
-  ['c'],
+  'c',
   version: '4.5.0',
   license: 'MIT',
   meson_version: '>= 0.47',
-  default_options: ['buildtype=debugoptimized', 'c_std=c99'],
+  default_options: ['buildtype=release', 'c_std=c99'],
 )
 
 version = '@0@'.format(meson.project_version())
-prog_git = find_program('git', required: false)
-if prog_git.found()
-  git_description = run_command([prog_git.path(), 'describe', '--dirty', '--always', '--tags'])
-  if git_description.returncode() == 0
-    version = git_description.stdout().strip()
-  endif
-endif
 add_project_arguments('-DIMV_VERSION="@0@"'.format(version), language: 'c')
 
 add_project_arguments('-D_XOPEN_SOURCE=700', language: 'c')
-
 add_project_arguments('-DRSVG_DISABLE_DEPRECATION_WARNINGS', language: 'c')
 
 cc = meson.get_compiler('c')
-dep_null = dependency('', required: false)
-m_dep = cc.find_library('m', required : false)
+m_dep = cc.find_library('m', required: false)
 
-_windows = get_option('windows')
-if _windows == 'wayland'
-  build_wayland = true
-  build_x11 = false
-  target_single_ws = true
-elif _windows == 'x11'
-  build_wayland = false
-  build_x11 = true
-  target_single_ws = true
-else
-  build_wayland = true
-  build_x11 = true
-  target_single_ws = false
-endif
-
-_unicode = get_option('unicode')
-if _unicode == 'icu'
+unicode = get_option('unicode')
+if unicode == 'icu'
   unicode_lib = dependency('icu-io')
   add_project_arguments('-DIMV_USE_ICU', language: 'c')
-elif _unicode == 'grapheme'
+elif unicode == 'grapheme'
   unicode_lib = cc.find_library('grapheme')
   add_project_arguments('-DIMV_USE_GRAPHEME', language: 'c')
 endif
 
-gl_dep = dependency('gl', required: false)
-if not gl_dep.found()
-  # libglvnd fallback for pure-wayland systems
-  gl_dep = dependency('opengl')
-endif
-
-deps_for_imv = [
-  dependency('pangocairo'),
-  gl_dep,
-  dependency('threads'),
-  dependency('xkbcommon'),
-  unicode_lib,
-  dependency('inih', fallback : ['inih', 'inih_dep']),
-  m_dep,
-]
-
-files_common = files(
+files_main = files('src/main.c')
+files_imv = files(
   'src/binds.c',
   'src/bitmap.c',
   'src/canvas.c',
@@ -83,43 +44,40 @@ files_common = files(
   'src/viewport.c',
 )
 
-files_imv = files_common + files(
-  'src/main.c',
-)
+deps_imv = [
+  dependency('pangocairo'),
+  dependency('threads'),
+  dependency('xkbcommon'),
+  unicode_lib,
+  dependency('inih', fallback : ['inih', 'inih_dep']),
+  m_dep,
+]
 
-enabled_window_systems = []
+window_system = get_option('window_system')
 
-if build_wayland
+if window_system == 'wayland' or window_system == 'all'
   files_wayland = files('src/wl_window.c', 'src/xdg-shell-protocol.c')
-  deps_for_wayland = [
+  deps_wayland = [
     dependency('wayland-client'),
     dependency('wayland-cursor'),
     dependency('wayland-egl'),
+    dependency('opengl'),
     dependency('egl'),
     cc.find_library('rt'),
   ]
-  enabled_window_systems += 'wayland'
-else
-  deps_for_wayland = dep_null
 endif
 
-if build_x11
+if window_system == 'x11' or window_system == 'all'
   files_x11 = files('src/x11_window.c')
-  deps_for_x11 = [
+  deps_x11 = [
     dependency('x11'),
     dependency('gl'),
     dependency('glu'),
     dependency('xcb'),
     dependency('xkbcommon-x11'),
   ]
-  enabled_window_systems += 'x11'
-else
-  deps_for_x11 = dep_null
 endif
 
-files_msg = files('src/imv_msg.c', 'src/ipc_common.c')
-
-enabled_backends = []
 foreach backend : [
   ['freeimage', 'library', 'freeimage'],
   ['libtiff', 'dependency', 'libtiff-4', []],
@@ -130,70 +88,87 @@ foreach backend : [
   ['libheif', 'dependency', 'libheif', []],
   ['libjxl', 'dependency', 'libjxl', []],
 ]
-  _backend_name = backend[0]
-  _dep_type = backend[1]
-  _dep_name = backend[2]
+  backend_name = backend[0]
+  dep_type = backend[1]
+  dep_name = backend[2]
 
-  if _dep_type == 'dependency'
-    _dep = dependency(_dep_name, required: get_option(_backend_name), version: backend[3])
-  elif _dep_type == 'library'
-    _dep = cc.find_library(_dep_name, required: get_option(_backend_name))
-  else
-    error('invalid dep type: @0@'.format(_dep_type))
+  if dep_type == 'dependency'
+    dep = dependency(dep_name, required: get_option(backend_name), version: backend[3])
+  elif dep_type == 'library'
+    dep = cc.find_library(dep_name, required: get_option(backend_name))
   endif
 
-  if _dep.found()
-    deps_for_imv += _dep
-    files_imv += files('src/backend_@0@.c'.format(_backend_name))
-    add_project_arguments('-DIMV_BACKEND_@0@'.format(_backend_name.to_upper()), language: 'c')
-    enabled_backends += _backend_name
+  if dep.found()
+    deps_imv += dep
+    files_imv += files('src/backend_@0@.c'.format(backend_name))
+    add_project_arguments('-DIMV_BACKEND_@0@'.format(backend_name.to_upper()), language: 'c')
   endif
 endforeach
+
+bindir = get_option('bindir')
+if window_system == 'all'
+  executable(
+    'imv-wayland',
+    files_main + files_imv + files_wayland,
+    dependencies: deps_imv + deps_wayland,
+    install: true,
+    install_dir: bindir
+  )
+  executable(
+    'imv-x11',
+    files_main + files_imv + files_x11,
+    dependencies: deps_imv + deps_x11,
+    install: true,
+    install_dir: bindir
+  )
+  install_data(
+    files('files/imv'),
+    install_dir: bindir,
+    install_mode: 'rwxr-xr-x'
+  )
+elif window_system == 'wayland'
+  executable(
+    'imv',
+    files_main + files_imv + files_wayland,
+    dependencies: deps_imv + deps_wayland,
+    install: true,
+    install_dir: bindir
+  )
+elif window_system == 'x11'
+  executable(
+    'imv',
+    files_main + files_imv + files_x11,
+    dependencies: deps_imv + deps_x11,
+    install: true,
+    install_dir: bindir
+  )
+endif
 
 executable(
   'imv-msg',
-  [files_common, files('src/imv_msg.c', 'src/dummy_window.c')],
-  dependencies: deps_for_imv,
+  files('src/imv_msg.c', 'src/ipc_common.c'),
   install: true,
-  install_dir: get_option('bindir'),
+  install_dir: bindir,
 )
 
-foreach ws : ['wayland', 'x11']
-  if get_variable('build_' + ws)
-    executable(
-      target_single_ws ? 'imv' : 'imv-@0@'.format(ws),
-      [get_variable('files_' + ws), files_imv],
-      dependencies: [deps_for_imv, get_variable('deps_for_' + ws)],
-      install: true,
-      install_dir: get_option('bindir'),
-    )
-  endif
-endforeach
+desktop_list = ['imv']
+man_list = [
+  [1, 'imv'],
+  [1, 'imv-msg'],
+  [5, 'imv'],
+]
 
 if get_option('contrib-commands')
   install_data(
     files('contrib/imv-dir'),
-    install_dir: get_option('bindir'),
+    install_dir: bindir,
     install_mode: 'rwxr-xr-x',
   )
+
+  desktop_list += ['imv-dir']
+  man_list += [[1, 'imv-dir']]
 endif
 
-if not target_single_ws
-  install_data(
-    files('files/imv'),
-    install_dir: get_option('bindir'),
-    install_mode: 'rwxr-xr-x',
-  )
-endif
-
-desktop_list = [
-  'imv',
-]
-if get_option('contrib-commands')
-  desktop_list += [
-    'imv-dir',
-  ]
-endif
 foreach desktop: desktop_list
   install_data(
     files('files/@0@.desktop'.format(desktop)),
@@ -208,43 +183,16 @@ install_data(
   install_mode: 'rw-r--r--',
 )
 
-dep_cmocka = dependency('cmocka', required: get_option('test'))
-
-if dep_cmocka.found()
-  foreach test : ['list', 'navigator']
-    test(
-      'test_@0@'.format(test),
-      executable(
-        'test_@0@'.format(test),
-        [files('test/@0@.c'.format(test), 'src/dummy_window.c'), files_common],
-        include_directories: include_directories('src'),
-        dependencies: [deps_for_imv, dep_cmocka],
-      )
-    )
-  endforeach
-endif
-
 prog_a2x = find_program('a2x', required: get_option('man'))
-
 if prog_a2x.found()
-  man_list = [
-    [1, 'imv'],
-    [1, 'imv-msg'],
-    [5, 'imv'],
-  ]
-  if get_option('contrib-commands')
-    man_list += [
-      [1, 'imv-dir'],
-    ]
-  endif
-
   foreach man : man_list
-    _section = man[0]
-    _topic = man[1]
+    section = man[0]
+    topic = man[1]
+
     custom_target(
-      '@0@(@1@)'.format(_topic, _section),
-      input: 'doc/@0@.@1@.txt'.format(_topic, _section),
-      output: '@0@.@1@'.format(_topic, _section),
+      '@0@(@1@)'.format(topic, section),
+      input: 'doc/@0@.@1@.txt'.format(topic, section),
+      output: '@0@.@1@'.format(topic, section),
       command: [
         prog_a2x,
         '--no-xmllint',
@@ -254,13 +202,29 @@ if prog_a2x.found()
         '@INPUT@'
       ],
       install: true,
-      install_dir: '@0@/man@1@'.format(get_option('mandir'), _section)
+      install_dir: '@0@/man@1@'.format(get_option('mandir'), section)
     )
   endforeach
 endif
 
-message('\n\n'
-+ 'Building imv @0@\n\n'.format(meson.project_version())
-+ 'Window systems enabled:\n- ' + '\n- '.join(enabled_window_systems) + '\n\n'
-+ 'Backends enabled:\n- ' + '\n- '.join(enabled_backends) + '\n'
-)
+
+dep_cmocka = dependency('cmocka', required: get_option('test'))
+if dep_cmocka.found()
+  if window_system == 'all' or window_system == 'wayland'
+    dep_gl = dependency('opengl', required: true)
+  else
+    dep_gl = dependency('gl', required: true)
+  endif
+
+  foreach test : ['list', 'navigator']
+    test(
+      'test_@0@'.format(test),
+      executable(
+        'test_@0@'.format(test),
+        files('test/@0@.c'.format(test), 'src/dummy_window.c') + files_imv,
+        include_directories: include_directories('src'),
+        dependencies: deps_imv + dep_gl + dep_cmocka,
+      )
+    )
+  endforeach
+endif
